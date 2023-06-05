@@ -1,0 +1,158 @@
+---
+title: "MANUSCRIPT"
+format:
+  docx:
+    reference-doc: reference-doc.docx
+    fig-cap-location: top
+execute:
+  echo: false
+lof: TRUE
+---
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(here)
+library(flextable)
+library(survival)
+library(ggplot2)
+library(ggfortify)
+library(survminer)
+library(ggh4x)
+library(officer)
+library(knitr)
+library(officedown)
+library(grid)
+
+knitr::opts_chunk$set(
+  echo       = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE, tab.cap.pre = "Table ", tab.cap.sep = ": ")
+num_tab <- 1
+num_fig <- 1
+```
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+source(here("functions_pacs.R"))
+```
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+source(here("prep_data_pacs.R"))
+```
+
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE, results='asis'}
+cat("\n") 
+cat("##",paste0("**Figure S", num_fig, ": Study Inclusion Flowchart CPRD AURUM**"))
+# include_graphics(here("figures_pacs", "Slide1.PNG"))
+num_fig <- num_fig + 1
+cat("\n\n\\pagebreak\n")
+```
+
+
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE, results='asis'}
+# Table One VE ----
+captions_ve <- captions %>% filter(!cve)
+ii <- 1
+ cat("\n") 
+    cat("##",paste0("**Table S", num_tab, ": ", captions_ve$caption_w_1[ii], "**", captions_ve$caption_2[ii]))
+    tbl_char <- table_characteristics_weighted %>%
+      filter(exposure_name == captions_ve$exposure_name[ii]) %>%
+      filter(comparator_name == captions_ve$comparator_name[ii]) %>%
+      filter(cdm_name == captions_ve$cdm_name[ii])
+
+    flextable_to_rmd(
+      getTableOne(tbl_char, captions_ve$cve[ii])
+    )
+    cat("The 4 cohorts represent vaccine rollout periods.")
+    cat("\n")
+    cat("*Calculated as the days of previous observation in the database before index date.") 
+    cat("\n")
+    cat("**Assessed anytime before index date.")
+    cat("\n")
+    cat("ASMD = Absolute standardized mean difference, COPD = Chronic obstructive pulmonary disease, GERD = Gastro-Esophageal reflux disease ")  
+```
+
+
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE, results='asis'}
+# Table Outcome VE ----
+for (ii in 1) {
+ table <- getDataForOutcomeTable(captions_outcome, ii, estimates, order_main)
+  
+  cohort_ind <-  which(!is.na(table$`Staggered cohort`))
+  by_window <- length(unique(table$`Post COVID outcomes`))-1
+  
+  borders_i <- seq(by_window + 1, cohort_ind[2], by_window)
+  for (jj in 2:(length(cohort_ind)-1)) {
+    borders_i <- c(borders_i, seq(cohort_ind[jj]+by_window, cohort_ind[jj+1], by_window))
+  }
+   borders_i <- c(borders_i, seq(cohort_ind[length(cohort_ind)]+by_window, nrow(table), by_window))
+  
+   cat("\n") 
+    cat("##", paste0("**Table S", num_tab, ": ", captions_outcome$caption_1[ii], "**", captions_outcome$caption_2[ii]))
+  flextable_to_rmd(
+    table %>%
+      rename("Cohort" = "Staggered cohort",
+             "Outcome" = "Post COVID outcomes",
+             "Time window" = "Days since COVID-19") %>%
+      flextable() %>%
+      separate_header(opts = "center-hspan") %>%
+      hline(border = border, j = 3:ncol(table)) %>%
+      hline(border = border, j = 2:ncol(table), 
+            i = borders_i) %>%
+      hline(border = border, j = 1:ncol(table), i =  cohort_ind) %>%
+      hline(border = border, j = 1:ncol(table), i = (cohort_ind[2:length(cohort_ind)]-1)) %>%
+      bold(part = "header") %>%
+      bold(j = 1:3, part = "body") %>%
+      bold(i =  cohort_ind, part = "body") %>%
+      bg(j = seq(2, ncol(table), 2), bg = "#ededed") %>%
+      align(align = "center", part = "header") %>%
+      align(align = "left", part = "body") %>%
+      set_table_properties(layout = "autofit") %>%
+      merge_at(i = 1:2, j = 1, part = "header") %>%
+      merge_at(i = 1:2, j = 2, part = "header") %>%
+      merge_at(i = 1:2, j = 3, part = "header") %>%
+      fontsize(size = 7, part = "header") %>%
+      fontsize(size = 7, part = "body") %>%
+      padding(padding = 1, part = "all")
+  )
+  cat("VTE = Venous thromboembolism (DVT + PE), DVT = Deep vein thrombosis, PE = Pulmonary embolism,
+      ATE = Arterial thromboembolism (IS + TIA + MI), IS = Ischemic stroke, TIA = Transient ischemic attack,
+      MI = Myocardial infarction, HF = Heart failure, HS = Hemorrhagic stroke, MP = Myocarditis or Pericarditis")
+  cat("\n\n\\pagebreak\n")
+    num_tab <- num_tab + 1
+}
+
+
+```
+
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE, results='asis'}
+#| label: metave
+#| fig-align: center
+#| fig-width: 10
+#| fig-asp: 0.7
+#| out-width: "90%"
+#| fig-dpi: 500
+#| fig.retina: 2
+
+# Forest meta-analysis VE ----
+list_figures <- list.files(here::here("figures_pacs"), ".png")
+list_figures_ve1 <- list_figures[grepl("Figure1", list_figures)]
+
+for (ii in 1) {
+   path <- here::here("figures_pacs", list_figures_ve1[grepl(forest_meta_ve$exposure_name[ii], list_figures_ve1) & 
+                            grepl(forest_meta_ve$censoring_filter[ii], list_figures_ve1)])
+ cat("\n")
+  cat("##",paste0("**Figure ", num_fig, ": ", forest_meta_ve$caption_1[ii], "**", forest_meta_ve$caption_2[ii]), "Dashed line represents a level of hetereogeneity I2 > 0.4.")
+cat("\n")
+cat(paste0("![](", path, ")"), "\n")
+num_fig <- num_fig + 1
+cat("VTE = Venous thromboembolism, ATE = Arterial thromboembolism, CD + HS = Cardiac diseases and Hemorrhagic stroke")
+cat("\n\n\\pagebreak\n")
+}
+
+```
+

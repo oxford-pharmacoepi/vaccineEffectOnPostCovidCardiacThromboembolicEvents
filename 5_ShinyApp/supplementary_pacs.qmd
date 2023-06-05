@@ -1,0 +1,409 @@
+---
+title: "SUPPLEMENT"
+subtitle: "The effectiveness of COVID-19 vaccines to prevent post COVID cardiac and thromboembolic complications: staggered cohort analyses of data from Spain, Estonia, and the UK."
+format:
+  docx:
+    reference-doc: reference-doc.docx
+    fig-cap-location: top
+execute:
+  echo: false
+toc: TRUE
+---
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(here)
+library(flextable)
+library(survival)
+library(ggplot2)
+library(ggfortify)
+library(survminer)
+library(ggh4x)
+library(officer)
+library(knitr)
+library(officedown)
+library(grid)
+
+knitr::opts_chunk$set(
+  echo       = FALSE,
+  message    = FALSE,
+  warning    = FALSE
+)
+knitr::opts_chunk$set(echo = FALSE, fig.cap = TRUE, tab.cap.pre = "Table ", tab.cap.sep = ": ")
+num_tab <- 1
+num_fig <- 1
+```
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+source(here("functions_pacs.R"))
+```
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE}
+source(here("prep_data_pacs.R"))
+```
+
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE, results='asis'}
+cat("\n\n\\pagebreak\n")
+cat("##",paste0("**Figure S", num_fig,": Details of the country-specific vaccination rollout and study-specific enrolment periods and definition of priority groups for vaccination** \n"))
+num_fig<- num_fig + 1
+cat("*Priority groups are country-specific and originally defined for the planning of the respective national vaccination rollout strategy by the respective governmental agency. \n
+**Essential workers, frontline healthcare workers, social care workers could not be identified from the data. Therefore, people were included based on their age and records of conditions relevant for “high risk” and “at risk” categories for priorisation.")
+
+cat("\n\n\\pagebreak\n")
+cat("##",paste0("**Table S", num_tab, ": Details of the country-specific vaccination rollout Country-specific lists of conditions characterising people as “clinically extremely vulnerable/high risk” or “at risk” for severe COVID-19.** \n"))
+cat("Sources for overview table: \n
+[1] NHS Digital. COVID-19 – high risk shielded patient list identification methodology - Rule logic. Update from 8 December 2021 --- General Practice Specification and Extraction Service (GPSES), NHS Digital: “Business Rules for Patient-level Data Extracts 2019/20 COVID19 At-risk patients”, Version: 1.1, Version Date: 17/03/2020 \n
+[2] https://beteve.cat/societat/vacunacio-grups-risc-malalties-greus-simultaniament-franja-70-79-anys/  \n
+[3] https://vaktsineeri.ee/wp-content/uploads/2021/06/covid-19_vaktsineerimise_plaan_19.01_0.pdf" 
+)
+
+cat("\n\n\\pagebreak\n")
+cat("\n") 
+cat("##",paste0("**Figure S", num_fig, ": Study Design using UK vaccination rollout (CPRD AURUM and GOLD) as illustrative example.**"))
+include_graphics(here("figures_pacs", "fig2.png"))
+num_fig<- num_fig + 1
+
+cat("\n\n\\pagebreak\n")
+cat("\n") 
+cat("##",paste0("**Figure S", num_fig, ": Follow-up in vaccinated and unvaccinated cohorts.**", "\n"))
+cat("##", "(A) Main analysis, (B) Sensitivity analysis: Vaccination between COVID-19 and outcome not allowed, (C) Post COVID sequelae refers just to the first outcome after infection., (D) Follow-up ends at first vaccine dose after index date.")
+# include_graphics(here("figures_pacs", "figSA.png"))
+num_fig<- num_fig + 1
+cat("\n\n\\pagebreak\n")
+```
+
+
+```{r, warning=FALSE, results='hide', cache.comments=FALSE, message=FALSE, results='asis'}
+cat("\n") 
+cat("##",paste0("**Figure S", num_fig, ": Study Inclusion Flowchart CPRD AURUM**"))
+include_graphics(here("figures_pacs", "Slide1.PNG"))
+num_fig<- num_fig + 1
+cat("\n\n\\pagebreak\n")
+
+cat("\n") 
+cat("##",paste0("**Figure S", num_fig, ": Study Inclusion Flowchart CPRD GOLD.**"))
+include_graphics(here("figures_pacs", "Slide2.PNG"))
+num_fig<- num_fig + 1
+cat("\n\n\\pagebreak\n")
+
+cat("\n") 
+cat("##",paste0("**Figure S", num_fig, ": Study Inclusion Flowchart SIDIAP.**"))
+include_graphics(here("figures_pacs", "Slide3.PNG"))
+num_fig<- num_fig + 1
+cat("\n\n\\pagebreak\n")
+
+cat("\n") 
+cat("##",paste0("**Figure S", num_fig, ": Study Inclusion Flowchart CORIVA.**"))
+include_graphics(here("figures_pacs", "Slide4.PNG"))
+num_fig<- num_fig + 1
+cat("\n\n\\pagebreak\n")
+```
+
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE, results='asis'}
+# Table One VE ----
+captions_ve <- captions %>% filter(!cve)
+for (ii in 1:nrow(captions_ve)) {
+
+  if (captions_ve$cdm_name[ii] == "AURUM" & captions_ve$exposure_name[ii] == "any vaccine vaccinated") {
+    cat("\n") 
+    cat("##",paste0("**Table S", num_tab, ": ", captions_ve$caption_u_1[ii], "**", captions_ve$caption_2[ii]))
+    
+    tbl_char_un <- table_characteristics %>%
+      filter(exposure_name == captions_ve$exposure_name[ii]) %>%
+      filter(comparator_name == captions_ve$comparator_name[ii]) %>%
+      filter(cdm_name == captions_ve$cdm_name[ii])
+
+    flextable_to_rmd(
+      getTableOne(tbl_char_un, captions_ve$cve[ii])
+    )
+    cat("The 4 cohorts represent vaccine rollout periods.")
+    cat("\n")
+    cat("*Calculated as the days of previous observation in the database before index date.") 
+    cat("\n")
+    cat("**Assessed anytime before index date.")
+    cat("\n")
+    cat("ASMD = Absolute standardized mean difference, COPD = Chronic obstructive pulmonary disease, GERD = Gastro-Esophageal reflux disease ")
+    
+    # Add a page break
+    cat("\n\n\\pagebreak\n")
+    num_tab <- num_tab + 1
+
+
+  } else {
+
+    cat("\n") 
+    cat("##",paste0("**Table S", num_tab, ": ", captions_ve$caption_w_1[ii], "**", captions_ve$caption_2[ii]))
+    tbl_char <- table_characteristics_weighted %>%
+      filter(exposure_name == captions_ve$exposure_name[ii]) %>%
+      filter(comparator_name == captions_ve$comparator_name[ii]) %>%
+      filter(cdm_name == captions_ve$cdm_name[ii])
+
+    flextable_to_rmd(
+      getTableOne(tbl_char, captions_ve$cve[ii])
+    )
+    cat("The 4 cohorts represent vaccine rollout periods.")
+    cat("\n")
+    cat("*Calculated as the days of previous observation in the database before index date.") 
+    cat("\n")
+    cat("**Assessed anytime before index date.")
+    cat("\n")
+    cat("ASMD = Absolute standardized mean difference, COPD = Chronic obstructive pulmonary disease, GERD = Gastro-Esophageal reflux disease ")  
+    cat("\n\n\\pagebreak\n")
+    num_tab <- num_tab + 1
+
+    cat("\n") 
+    cat("##",paste0("**Table S", num_tab, ": ", captions_ve$caption_u_1[ii], "**", captions_ve$caption_2[ii]))
+    tbl_char_un <- table_characteristics %>%
+      filter(exposure_name == captions_ve$exposure_name[ii]) %>%
+      filter(comparator_name == captions_ve$comparator_name[ii]) %>%
+      filter(cdm_name == captions_ve$cdm_name[ii])
+
+    flextable_to_rmd(
+      getTableOne(tbl_char_un, captions_ve$cve[ii])
+        )
+   cat("The 4 cohorts represent vaccine rollout periods.")
+    cat("\n")
+    cat("*Calculated as the days of previous observation in the database before index date.") 
+    cat("\n")
+    cat("**Assessed anytime before index date.")
+    cat("\n")
+    cat("ASMD = Absolute standardized mean difference, COPD = Chronic obstructive pulmonary disease, GERD = Gastro-Esophageal reflux disease ")
+    cat("\n\n\\pagebreak\n")
+    num_tab <- num_tab + 1
+  }
+}
+```
+
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE, results='asis'}
+# Table One CVE ----
+captions_cve <- captions %>% filter(cve)
+for (ii in 1:nrow(captions_cve)) {
+
+  if (captions_cve$cdm_name[ii] == "AURUM" & captions_cve$exposure_name[ii] == "any vaccine vaccinated") {
+    tbl_char_un <- table_characteristics %>%
+      filter(exposure_name == captions_cve$exposure_name[ii]) %>%
+      filter(comparator_name == captions_cve$comparator_name[ii]) %>%
+      filter(cdm_name == captions_cve$cdm_name[ii])
+
+    cat("\n") 
+    cat("##", paste0("**Table S", num_tab, ": ", captions_cve$caption_u_1[ii], "**", captions_cve$caption_2[ii]))
+    flextable_to_rmd(
+      getTableOne(tbl_char_un, captions_cve$cve[ii])
+    )
+    cat("The 4 cohorts represent vaccine rollout periods.")
+    cat("\n")
+    cat("*Calculated as the days of previous observation in the database before index date.") 
+    cat("\n")
+    cat("**Assessed anytime before index date.")
+    cat("\n")
+    cat("ASMD = Absolute standardized mean difference, COPD = Chronic obstructive pulmonary disease, GERD = Gastro-Esophageal reflux disease ")   
+    # Add a page break
+    cat("\n\n\\pagebreak\n")
+    num_tab <- num_tab + 1
+
+
+  } else {
+
+    tbl_char <- table_characteristics_weighted %>%
+      filter(exposure_name == captions_cve$exposure_name[ii]) %>%
+      filter(comparator_name == captions_cve$comparator_name[ii]) %>%
+      filter(cdm_name == captions_cve$cdm_name[ii])
+
+    cat("\n") 
+    cat("##", paste0("**Table S", num_tab, ": ", captions_cve$caption_w_1[ii], "**", captions_cve$caption_2[ii]))
+    flextable_to_rmd(
+      getTableOne(tbl_char, captions_cve$cve[ii])
+    )
+    cat("The 4 cohorts represent vaccine rollout periods.")
+    cat("\n")
+    cat("*Calculated as the days of previous observation in the database before index date.") 
+    cat("\n")
+    cat("**Assessed anytime before index date.")
+    cat("\n")
+    cat("ASMD = Absolute standardized mean difference, COPD = Chronic obstructive pulmonary disease, GERD = Gastro-Esophageal reflux disease ")
+    cat("\n\n\\pagebreak\n")
+    num_tab <- num_tab + 1
+
+    tbl_char_un <- table_characteristics %>%
+      filter(exposure_name == captions_cve$exposure_name[ii]) %>%
+      filter(comparator_name == captions_cve$comparator_name[ii]) %>%
+      filter(cdm_name == captions_cve$cdm_name[ii])
+
+    cat("\n") 
+    cat("##", paste0("**Table S", num_tab, ": ", captions_cve$caption_u_1[ii], "**", captions_cve$caption_2[ii]))
+    flextable_to_rmd(
+      getTableOne(tbl_char_un, captions_cve$cve[ii])
+        )
+   cat("The 4 cohorts represent vaccine rollout periods.")
+    cat("\n")
+    cat("*Calculated as the days of previous observation in the database before index date.") 
+    cat("\n")
+    cat("**Assessed anytime before index date.")
+    cat("\n")
+    cat("ASMD = Absolute standardized mean difference, COPD = Chronic obstructive pulmonary disease, GERD = Gastro-Esophageal reflux disease ")    
+
+    cat("\n\n\\pagebreak\n")
+    num_tab <- num_tab + 1
+  }
+}
+```
+
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE, results='asis'}
+# Table Outcome VE ----
+for (ii in 2:nrow(captions_outcome)) {
+  table <- getDataForOutcomeTable(captions_outcome, ii, estimates, order_sup)
+  
+  cohort_ind <-  which(!is.na(table$`Staggered cohort`))
+  by_window <- length(unique(table$`Post COVID outcomes`))-1
+  
+  borders_i <- seq(by_window + 1, cohort_ind[2], by_window)
+  for (jj in 2:(length(cohort_ind)-1)) {
+    borders_i <- c(borders_i, seq(cohort_ind[jj]+by_window, cohort_ind[jj+1], by_window))
+  }
+   borders_i <- c(borders_i, seq(cohort_ind[length(cohort_ind)]+by_window, nrow(table), by_window))
+  
+   cat("\n") 
+    cat("##", paste0("**Table S", num_tab, ": ", captions_outcome$caption_1[ii], "**", captions_outcome$caption_2[ii]))
+  flextable_to_rmd(
+    table %>%
+      rename("Cohort" = "Staggered cohort",
+             "Outcome" = "Post COVID outcomes",
+             "Time window" = "Days since COVID-19") %>%
+      flextable() %>%
+      separate_header(opts = "center-hspan") %>%
+      hline(border = border, j = 3:ncol(table)) %>%
+      hline(border = border, j = 2:ncol(table), 
+            i = borders_i) %>%
+      hline(border = border, j = 1:ncol(table), i =  cohort_ind) %>%
+      hline(border = border, j = 1:ncol(table), i = (cohort_ind[2:length(cohort_ind)]-1)) %>%
+      bold(part = "header") %>%
+      bold(j = 1:3, part = "body") %>%
+      bold(i =  cohort_ind, part = "body") %>%
+      bg(j = seq(2, ncol(table), 2), bg = "#ededed") %>%
+      align(align = "center", part = "header") %>%
+      align(align = "left", part = "body") %>%
+      set_table_properties(layout = "autofit") %>%
+      merge_at(i = 1:2, j = 1, part = "header") %>%
+      merge_at(i = 1:2, j = 2, part = "header") %>%
+      merge_at(i = 1:2, j = 3, part = "header") %>%
+      fontsize(size = 7, part = "header") %>%
+      fontsize(size = 7, part = "body") %>%
+      padding(padding = 1, part = "all")
+  )
+  cat("VTE = Venous thromboembolism (DVT + PE), DVT = Deep vein thrombosis, PE = Pulmonary embolism,
+      ATE = Arterial thromboembolism (IS + TIA + MI), IS = Ischemic stroke, TIA = Transient ischemic attack,
+      MI = Myocardial infarction, HF = Heart failure, HS = Hemorrhagic stroke, MP = Myocarditis or Pericarditis")
+  cat("\n\n\\pagebreak\n")
+    num_tab <- num_tab + 1
+}
+
+
+```
+
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE, results='asis'}
+#| label: metave
+#| fig-align: center
+#| fig-width: 10
+#| fig-asp: 0.7
+#| out-width: "90%"
+#| fig-dpi: 500
+#| fig.retina: 2
+
+# Forest meta-analysis VE ----
+list_figures <- list.files(here::here("figures_pacs"), ".png")
+list_figures_ve1 <- list_figures[grepl("Figure1", list_figures)]
+
+for (ii in 2:nrow(forest_meta_ve)) {
+   path <- here::here("figures_pacs", list_figures_ve1[grepl(forest_meta_ve$exposure_name[ii], list_figures_ve1) & 
+                            grepl(forest_meta_ve$censoring_filter[ii], list_figures_ve1)])
+ cat("\n")
+  cat("##",paste0("**Figure S", num_fig, ": ", forest_meta_ve$caption_1[ii], "**", forest_meta_ve$caption_2[ii]), "Dashed line represents a level of hetereogeneity I2 > 0.4.")
+cat("\n")
+cat(paste0("![](", path, ")"), "\n")
+num_fig <- num_fig + 1
+cat("VTE = Venous thromboembolism, ATE = Arterial thromboembolism, CD + HS = Cardiac diseases and Hemorrhagic stroke")
+cat("\n\n\\pagebreak\n")
+}
+
+```
+
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE, results='asis'}
+#| label: indve
+#| fig-align: center
+#| fig-width: 10
+#| fig-asp: 0.7
+#| out-width: "90%"
+#| fig-dpi: 500
+#| fig.retina: 2
+
+# Forest individual VE ----
+list_figures_ve2 <- list_figures[grepl("Figure2", list_figures)]
+for (ii in 1:nrow(forest_groups_ve)) {
+  path <- here::here("figures_pacs", list_figures_ve2[grepl(forest_groups_ve$group[ii], list_figures_ve2) & 
+                                                   grepl(forest_groups_ve$comparison[ii], list_figures_ve2) &
+                                                   grepl(forest_groups_ve$censoring_filter[ii], list_figures_ve2)])
+  cat("\n")
+  cat("##",paste0("**Figure S", num_fig, ": ", forest_groups_ve$caption_1[ii], "**", forest_groups_ve$caption_2[ii]), "Dashed line represents a level of hetereogeneity I2 > 0.4.")
+  cat("\n")
+  cat(paste0("![](", path, ")"), "\n")
+  num_fig <- num_fig + 1
+  cat("\n\n\\pagebreak\n")
+}
+
+```
+
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE, results='asis'}
+#| label: metacve
+#| fig-align: center
+#| fig-width: 10
+#| fig-asp: 0.7
+#| out-width: "90%"
+#| fig-dpi: 500
+#| fig.retina: 2
+
+# Forest meta-analysis CVE ----
+list_figures_cve1 <- list_figures[grepl("Figure3", list_figures)]
+
+for (ii in 2:nrow(forest_meta_cve)) {
+  path <- here::here("figures_pacs", list_figures_cve1[grepl(forest_meta_cve$exposure_name[ii], list_figures_cve1) & 
+                                                    grepl(forest_meta_cve$censoring_filter[ii], list_figures_cve1)])
+  
+  
+  cat("\n")
+  cat("##",paste0("**Figure S", num_fig, ": ", forest_meta_cve$caption_1[ii], "**", forest_meta_cve$caption_2[ii]), "Dashed line represents a level of hetereogeneity I2 > 0.4.")
+  cat("\n")
+  cat(paste0("![](", path, ")"), "\n")
+  num_fig <- num_fig + 1
+  cat("VTE = Venous thromboembolism, ATE = Arterial thromboembolism, CD + HS = Cardiac diseases and Hemorrhagic stroke")
+  cat("\n\n\\pagebreak\n")
+}
+
+```
+
+```{r, warning=FALSE, cache.comments=FALSE, message=FALSE, results='asis'}
+#| label: indcve
+#| fig-align: center
+#| fig-width: 10
+#| fig-asp: 0.7
+#| out-width: "90%"
+#| fig-dpi: 500
+#| fig.retina: 2
+
+# Forest individual VE ----
+list_figures_cve2 <- list_figures[grepl("Figure4", list_figures)]
+for (ii in 1:nrow(forest_groups_cve)) {
+  path <- here::here("figures_pacs", list_figures_cve2[grepl(forest_groups_cve$group[ii], list_figures_cve2) & 
+                                                   grepl(forest_groups_cve$comparison[ii], list_figures_cve2) &
+                                                   grepl(forest_groups_cve$censoring_filter[ii], list_figures_cve2)])
+  cat("\n")
+  cat("##",paste0("**Figure S", num_fig, ": ", forest_groups_cve$caption_1[ii], "**", forest_groups_cve$caption_2[ii]), "Dashed line represents a level of hetereogeneity I2 > 0.4.")
+  cat("\n")
+  cat(paste0("![](", path, ")"), "\n")
+  num_fig <- num_fig + 1
+  cat("\n\n\\pagebreak\n")
+}
+
+```
