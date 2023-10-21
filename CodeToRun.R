@@ -60,7 +60,6 @@ results <- paste0("Results_", cdmName(cdm))
 
 # Which steps should be run
 instantiateCohorts <- TRUE
-runCharacterization <- TRUE
 runPropensityScores <- TRUE
 runOutcomeModel <- TRUE
 

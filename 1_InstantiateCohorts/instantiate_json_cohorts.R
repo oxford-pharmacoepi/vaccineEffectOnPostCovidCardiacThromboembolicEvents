@@ -12,11 +12,6 @@ if (cdmName(cdm) == "GOLD") {
   cdm <- generateCohortSet(cdm, vaccinatedCohortSet, vaccinatedCohortName, TRUE, TRUE)
 }
 
-# instantiate SYMPTOMS cohorts
-info(logger, "INSTANTIATE SYMPTOMS COHORTS")
-symptomsCohortSet <- readCohortSet(here("1_InstantiateCohorts", "symptoms"))
-cdm <- generateCohortSet(cdm, symptomsCohortSet, symptomsCohortName, TRUE, TRUE)
-
 # instantiate CONSEQUENCES cohorts
 info(logger, "INSTANTIATE CONSEQUENCES COHORTS")
 consequencesCohortSet <- readCohortSet(here("1_InstantiateCohorts", "consequences"))

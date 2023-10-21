@@ -57,10 +57,7 @@ allCohortNames <- c(
 info(logger, "LOAD STUDY FUNCTIONS")
 source(here("functions.R"))
 
-snapshotDb <- dplyr::as_tibble(
-  do.call(cbind.data.frame,CDMConnector::snapshot(cdm))
-)
-write_csv(snapshotDb, here(results, paste0("cdm_snapshot_", cdmName(cdm), ".csv")))
+write_csv(snapshot(cdm), here(results, paste0("cdm_snapshot_", cdmName(cdm), ".csv")))
 
 # STEP 1 Instantiate cohorts ----
 if (isTRUE(instantiateCohorts)) {
@@ -103,17 +100,6 @@ if (isTRUE(instantiateCohorts)) {
     cohortTables = allCohortNames,
     cdmName = cdmName(cdm)
   )
-}
-
-# STEP 2 Characterization ----
-info(logger, "STEP 2 CHARACTERIZATION")
-if (runCharacterization) {
-  info(logger, "RUNNING LARGE SCALE CHARACTERIZATION FOR POSTACUTECOVID19")
-  #source(here("2_Characterization", "run_large_scale_characteristics_postacutecovid19.R"))
-  info(logger, "RUNNING OVERLAP FOR LONGCOVID COHORTS")
-  source(here("2_Characterization", "run_longcovid_overlap.R"))
-} else {
-  info(logger, "STEP 2 SKIPPING CHARACTERIZATION")
 }
 
 # STEP 3 Propensity scores ----
