@@ -68,8 +68,8 @@ if (isTRUE(instantiateCohorts)) {
   source(here("1_InstantiateCohorts", "instantiate_json_cohorts.R"))
 
   ## 1.2 Instantiate long covid cohorts ----
-  info(logger, "INSTANTIATE LONGCOVID COHORTS")
-  source(here("1_InstantiateCohorts", "instantiate_longcovid_cohort.R"))
+  # info(logger, "INSTANTIATE LONGCOVID COHORTS")
+  # source(here("1_InstantiateCohorts", "instantiate_longcovid_cohort.R"))
 
   ## 1.3 Instantiate pacs cohorts ----
   info(logger, "INSTANTIATE PACS COHORTS")

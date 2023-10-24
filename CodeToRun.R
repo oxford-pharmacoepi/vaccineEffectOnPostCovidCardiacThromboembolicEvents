@@ -19,14 +19,14 @@ library(EmpiricalCalibration)
 library(spatstat)
 library(Hmisc)
 
-databaseName <- "..." # "GOLD", "AURUM", "SIDIAP", "UiO", or "CORIVA"
+  databaseName <- "SIDIAP" # "GOLD", "AURUM", "SIDIAP", "UiO", or "CORIVA"
 
 # Connection details
-server_dbi <- "..."
-user <- "..."
-password <- "..."
-port <- "..."
-host <- "..."
+server_dbi <- Sys.getenv("DB_SERVER_DBI_22t2")
+user <- Sys.getenv("DB_USER_longcovid")
+password <- Sys.getenv("DB_PASSWORD_longcovid")
+port <- Sys.getenv("DB_PORT")
+host <- Sys.getenv("DB_HOST")
 
 db <- dbConnect(
   RPostgres::Postgres(),
@@ -37,8 +37,8 @@ db <- dbConnect(
   password = password
 )
 
-cdmDatabaseSchema <- "..."
-resultsDatabaseSchema <- "..."
+cdmDatabaseSchema <- "omop22t2_cmbd"
+resultsDatabaseSchema <- "results22t2_cmbd"
 
 cdm <- cdmFromCon(
   con = db, 
@@ -53,7 +53,7 @@ cdm$person %>%
   compute()
 
 # cohort stem where cohorts will be instantiated
-cohortStem <- "..."
+cohortStem <- "nmb_pacs"
 
 # output folder
 results <- paste0("Results_", cdmName(cdm))
@@ -73,3 +73,4 @@ source("RunStudy.R")
 print("Done!")
 print("-- If all has worked, there should now be a zip folder with your results in the output folder to share")
 print("-- Thank you for running the study!")
+

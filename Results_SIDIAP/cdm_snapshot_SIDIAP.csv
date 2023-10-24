@@ -1,0 +1,2 @@
+cdm_name,cdm_source_name,cdm_description,cdm_documentation_reference,cdm_version,cdm_holder,cdm_release_date,vocabulary_version,person_count,observation_period_count,earliest_observation_period_start_date,latest_observation_period_end_date,snapshot_date
+SIDIAP,SIDIAP,SIDIAP database: electronic clinical records in primary care as a source of information for epidemiologic research,NA,5.3.1,SIDIAP,2022-11-14,v5.0 22-JUN-22,8265343,8265343,2006-01-01,2022-06-30,2023-10-23
