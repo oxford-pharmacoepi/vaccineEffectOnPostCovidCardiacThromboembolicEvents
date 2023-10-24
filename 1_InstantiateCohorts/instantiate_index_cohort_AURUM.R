@@ -1164,7 +1164,7 @@ indexAttrition <- attr(study1_cohort, "attrition") %>%
   ) %>%
   arrange(cohort_definition_id, reason_id)
 
-indexCohortCount <- getCohortCount(indexCohort)
+# indexCohortCount <- getCohortCount(indexCohort)
 
 # cdm[[indexCohortName]] <- newGeneratedCohortSet(
 #   cohortRef = computeQuery(indexCohort, indexCohortName, FALSE, attr(cdm, "write_schema"), TRUE),
