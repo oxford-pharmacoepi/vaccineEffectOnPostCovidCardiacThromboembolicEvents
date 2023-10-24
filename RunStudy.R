@@ -71,8 +71,8 @@ if (isTRUE(instantiateCohorts)) {
   source(here("1_InstantiateCohorts", "instantiate_json_cohorts.R"))
 
   ## 1.2 Instantiate long covid cohorts ----
-  info(logger, "INSTANTIATE LONGCOVID COHORTS")
-  source(here("1_InstantiateCohorts", "instantiate_longcovid_cohort.R"))
+  # info(logger, "INSTANTIATE LONGCOVID COHORTS")
+  # source(here("1_InstantiateCohorts", "instantiate_longcovid_cohort.R"))
 
   ## 1.3 Instantiate pacs cohorts ----
   info(logger, "INSTANTIATE PACS COHORTS")
@@ -108,10 +108,10 @@ if (isTRUE(instantiateCohorts)) {
 # STEP 2 Characterization ----
 info(logger, "STEP 2 CHARACTERIZATION")
 if (runCharacterization) {
-  info(logger, "RUNNING LARGE SCALE CHARACTERIZATION FOR POSTACUTECOVID19")
+  # info(logger, "RUNNING LARGE SCALE CHARACTERIZATION FOR POSTACUTECOVID19")
   #source(here("2_Characterization", "run_large_scale_characteristics_postacutecovid19.R"))
-  info(logger, "RUNNING OVERLAP FOR LONGCOVID COHORTS")
-  source(here("2_Characterization", "run_longcovid_overlap.R"))
+  # info(logger, "RUNNING OVERLAP FOR LONGCOVID COHORTS")
+  # source(here("2_Characterization", "run_longcovid_overlap.R"))
 } else {
   info(logger, "STEP 2 SKIPPING CHARACTERIZATION")
 }

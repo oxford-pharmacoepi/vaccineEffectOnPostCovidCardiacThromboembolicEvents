@@ -318,9 +318,16 @@ for (j in outcomeId) {
   }
 }
 
-cdm[[pacsCohortName]] <- newGeneratedCohortSet(
-  cohortRef = computeQuery(pacsCohort, pacsCohortName, FALSE, attr(cdm, "write_schema"), TRUE),
-  cohortSetRef = insertTable(pacsCohortSet, cdm, paste0(pacsCohortName, "_set")),
-  cohortAttritionRef = insertTable(attrition, cdm, paste0(pacsCohortName, "_attrition")),
-  cohortCountRef = insertTable(getCohortCount(pacsCohort), cdm, paste0(pacsCohortName, "_count"))
-)
+# cdm[[pacsCohortName]] <- newGeneratedCohortSet(
+#   cohortRef = computeQuery(pacsCohort, pacsCohortName, FALSE, attr(cdm, "write_schema"), TRUE),
+#   cohortSetRef = insertTable(pacsCohortSet, cdm, paste0(pacsCohortName, "_set")),
+#   cohortAttritionRef = insertTable(attrition, cdm, paste0(pacsCohortName, "_attrition")),
+#   cohortCountRef = insertTable(getCohortCount(pacsCohort), cdm, paste0(pacsCohortName, "_count"))
+# )
+
+cdm <- generateCustomCohort(cdm = cdm, 
+                            name = pacsCohortName, 
+                            cohort = pacsCohort, 
+                            cohortSet =  pacsCohortSet, 
+                            cohortAttrition = attrition, 
+                            overwrite = TRUE)
