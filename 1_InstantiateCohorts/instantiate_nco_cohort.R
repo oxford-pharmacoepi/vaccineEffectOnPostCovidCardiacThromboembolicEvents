@@ -31,9 +31,16 @@ ncoAttrition <- ncoCohortCount %>%
     excluded_subjects = 0
   )
 
-cdm[[ncoCohortName]] <- newGeneratedCohortSet(
-  cohortRef = computeQuery(ncoCohort, ncoCohortName, FALSE, attr(cdm, "write_schema"), TRUE),
-  cohortSetRef = insertTable(ncoCohortSet, cdm, paste0(ncoCohortName, "_set")),
-  cohortAttritionRef = insertTable(ncoAttrition, cdm, paste0(ncoCohortName, "_attrition")),
-  cohortCountRef = insertTable(ncoCohortCount, cdm, paste0(ncoCohortName, "_count"))
-)
+# cdm[[ncoCohortName]] <- newGeneratedCohortSet(
+#   cohortRef = computeQuery(ncoCohort, ncoCohortName, FALSE, attr(cdm, "write_schema"), TRUE),
+#   cohortSetRef = insertTable(ncoCohortSet, cdm, paste0(ncoCohortName, "_set")),
+#   cohortAttritionRef = insertTable(ncoAttrition, cdm, paste0(ncoCohortName, "_attrition")),
+#   cohortCountRef = insertTable(ncoCohortCount, cdm, paste0(ncoCohortName, "_count"))
+# )
+
+cdm <- generateCustomCohort(cdm = cdm, 
+                            name = ncoCohortName, 
+                            cohort = ncoCohort, 
+                            cohortSet =  ncoCohortSet, 
+                            cohortAttrition = ncoAttrition, 
+                            overwrite = TRUE)

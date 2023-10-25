@@ -54,9 +54,16 @@ vaccinatedAttrition <- vaccinatedCount %>%
     excluded_subjects = 0
   )
 
-cdm[[vaccinatedCohortName]] <- newGeneratedCohortSet(
-  cohortRef = computeQuery(vaccinated, vaccinatedCohortName, FALSE, attr(cdm, "write_schema"), TRUE),
-  cohortSetRef = insertTable(vaccinatedCohortSet, cdm, paste0(vaccinatedCohortName, "_set")),
-  cohortAttritionRef = insertTable(vaccinatedAttrition, cdm, paste0(vaccinatedCohortName, "_attrition")),
-  cohortCountRef = insertTable(vaccinatedCount, cdm, paste0(vaccinatedCohortName, "_count"))
-)
+# cdm[[vaccinatedCohortName]] <- newGeneratedCohortSet(
+#   cohortRef = computeQuery(vaccinated, vaccinatedCohortName, FALSE, attr(cdm, "write_schema"), TRUE),
+#   cohortSetRef = insertTable(vaccinatedCohortSet, cdm, paste0(vaccinatedCohortName, "_set")),
+#   cohortAttritionRef = insertTable(vaccinatedAttrition, cdm, paste0(vaccinatedCohortName, "_attrition")),
+#   cohortCountRef = insertTable(vaccinatedCount, cdm, paste0(vaccinatedCohortName, "_count"))
+# )
+
+cdm <- generateCustomCohort(cdm = cdm, 
+                            name = vaccinatedCohortName, 
+                            cohort = vaccinated, 
+                            cohortSet =  vaccinatedCohortSet, 
+                            cohortAttrition = vaccinatedAttrition, 
+                            overwrite = TRUE)
