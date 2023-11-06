@@ -5,9 +5,9 @@ anyVaccineId <- cohortSet(cdm[[vaccinatedCohortName]]) %>%
 anyCovidId <- cohortSet(cdm[[covidCohortName]]) %>%
   filter(cohort_name == "covid19") %>%
   pull("cohort_definition_id")
-postAcuteCovidId <- cohortSet(cdm[[symptomsCohortName]]) %>%
-  filter(cohort_name == "post_acute_covid19") %>%
-  pull("cohort_definition_id")
+# postAcuteCovidId <- cohortSet(cdm[[symptomsCohortName]]) %>%
+#   filter(cohort_name == "post_acute_covid19") %>%
+#   pull("cohort_definition_id")
 
 unbalancedCovariates <- read_csv(here(results, paste0("asmd_", cdmName(cdm), ".csv")), show_col_types = FALSE) %>%
   filter(asmd_adjusted > 0.1) %>%
@@ -22,7 +22,7 @@ if (nrow(unbalancedCovariates) > 0) {
     ))
 }
 
-longcovidCohortSet <- cohortSet(cdm[[longcovidCohortName]]) %>% collect()
+# longcovidCohortSet <- cohortSet(cdm[[longcovidCohortName]]) %>% collect()
 pacsCohortSet <- cohortSet(cdm[[pacsCohortName]]) %>% collect()
 ncoCohortSet <- cohortSet(cdm[[ncoCohortName]]) %>% collect()
 consequencesCohortSet <- cohortSet(cdm[[consequencesCohortName]]) %>% collect()
@@ -35,11 +35,11 @@ events <- cdm[[indexCohortName]] %>%
   addEvent(cdm, vaccinatedCohortName, anyVaccineId, window = c(1, NA), name = "next_vaccine") %>%
   addEvent(cdm, covidCohortName, anyCovidId, window = c(1, NA), name = "next_covid") %>%
   addEvent(cdm, "death", name = "death", eventDate = "death_date") %>%
-  addMultipleEvent(cdm, longcovidCohortName, longcovidCohortSet$cohort_definition_id, c(1, NA), tolower(longcovidCohortSet$cohort_name)) %>%
+  # addMultipleEvent(cdm, longcovidCohortName, longcovidCohortSet$cohort_definition_id, c(1, NA), tolower(longcovidCohortSet$cohort_name)) %>%
   addMultipleEvent(cdm, pacsCohortName, pacsCohortSet$cohort_definition_id, c(1, NA), tolower(pacsCohortSet$cohort_name)) %>%
-  addMultipleEvent(cdm, ncoCohortName, ncoCohortSet$cohort_definition_id, c(1, NA), tolower(ncoCohortSet$cohort_name)) %>%
+  addMultipleEvent(cdm, ncoCohortName, ncoCohortSet$cohort_definition_id, c(1, NA), tolower(ncoCohortSet$cohort_name)) 
   #addMultipleEvent(cdm, consequencesCohortName, consequencesCohortSet$cohort_definition_id, c(1, NA), tolower(consequencesCohortSet$cohort_name)) %>%
-  addMultipleEvent(cdm, symptomsCohortName, postAcuteCovidId, c(1, NA), "next_post_acute_covid19")
+  # addMultipleEvent(cdm, symptomsCohortName, postAcuteCovidId, c(1, NA), "next_post_acute_covid19")
 
 # compute estimates
 comparisonIds <-  comparisons$comparison_id[comparisons$skip == 0]
@@ -52,10 +52,10 @@ comparisonIds <- comparisonIds[lapply(comparisonIds, function(x) {
   unlist()]
 outcomeNames <- c(
   ncoCohortSet$cohort_name,
-  longcovidCohortSet$cohort_name, 
+  # longcovidCohortSet$cohort_name, 
   pacsCohortSet$cohort_name, 
   #consequencesCohortSet$cohort_name,
-  "next_post_acute_covid19",
+  # "next_post_acute_covid19",
   "next_covid"
 ) %>%
   tolower()
@@ -71,17 +71,20 @@ for (comparison_id in comparisonIds) {
     filter(.data$comparison_id == .env$comparison_id) %>%
     pull("comparator_cohort_id")
   
-  collectedCohort <-  cdm[[indexCohortName]] %>%
+  collectedCohort <- cdm[[indexCohortName]] %>%
     filter(cohort_definition_id %in% !!c(exposure_cohort_id, comparator_cohort_id)) %>%
     mutate(group = if_else(
       cohort_definition_id == !!exposure_cohort_id,
       "exposure",
       "comparator"
     )) %>% 
-    select("group", "subject_id", "cohort_start_date") %>%
+    inner_join(attr(cdm[[indexCohortName]], "cohort_set"), by = "cohort_definition_id") %>%
+    select("group", "subject_id", "cohort_start_date", "cohort_name") %>%
     inner_join(events, by = c("subject_id", "cohort_start_date")) %>%
     collect() %>%
-    mutate(comparison_id = .env$comparison_id)
+    mutate(unvaccinated = grepl("unvaccinated", .data$cohort_name)) %>%
+    mutate(comparison_id = .env$comparison_id) %>%
+    select(-"cohort_name")
   
   unbalancedCovariatesComparison <- unbalancedCovariates %>%
     filter(.data$comparison_id == .env$comparison_id) %>%
@@ -205,16 +208,16 @@ if (runParallel) {
       )
       x$result <- x$result %>% mutate(comparison_id = comparison_id)
       x$survival_plot <- x$survival_plot %>% 
-        filter(
-          outcome_name %in% c(
-            "longcovid_post_acute_covid19_28_365", 
-            "longcovid_post_acute_covid19_90_365", 
-            "longcovid_any_symptom_28_365", 
-            "longcovid_any_symptom_90_365", 
-            "next_post_acute_covid19",
-            "next_covid"
-          )
-        ) %>%
+        # filter(
+        #   outcome_name %in% c(
+        #     "longcovid_post_acute_covid19_28_365", 
+        #     "longcovid_post_acute_covid19_90_365", 
+        #     "longcovid_any_symptom_28_365", 
+        #     "longcovid_any_symptom_90_365", 
+        #     "next_post_acute_covid19",
+        #     "next_covid"
+        #   )
+        # ) %>%
         mutate(comparison_id = comparison_id)
       log4r::info(logger, paste0("finished comparison:", comparison_id))
       readr::write_csv(x$result, here::here(results, tempData, paste0("estimates_comparison_", comparison_id, ".csv")))
@@ -228,14 +231,22 @@ if (runParallel) {
 }
 
 survivalData <- lapply(comparisonIds, function(x) {
-  read_csv(here(results, tempData, paste0("survival_comparison_", x, ".csv")), show_col_types = FALSE) 
+  if(file.exists(here(results, tempData, paste0("survival_comparison_", x, ".csv")))) {
+    read_csv(here(results, tempData, paste0("survival_comparison_", x, ".csv")), show_col_types = FALSE)
+  } else {
+    NULL
+  }
 }) %>%
   bind_rows() %>%
   mutate(cdm_name = cdmName(cdm)) %>%
   write_csv(here(results, paste0("survival_plot_", cdmName(cdm), ".csv")))
 
 dataEstimates <- lapply(comparisonIds, function(x) {
+  if(file.exists(here(results, tempData, paste0("survival_comparison_", x, ".csv")))) {
   read_csv(here(results, tempData, paste0("estimates_comparison_", x, ".csv")), show_col_types = FALSE)
+  } else {
+    NULL
+  }
 })
 dataEstimates <- bind_rows(dataEstimates)
 
@@ -243,12 +254,12 @@ outcomeNamesGroups <- tibble(
   outcome_name = ncoCohortSet$cohort_name,
   outcome_group = "nco"
 ) %>% 
-  union_all(
-    tibble(
-      outcome_name = longcovidCohortSet$cohort_name
-    ) %>%
-      mutate(outcome_group = if_else(grepl("28_365", outcome_name), "longcovid28", "longcovid90"))
-  ) %>%
+  # union_all(
+  #   tibble(
+  #     outcome_name = longcovidCohortSet$cohort_name
+  #   ) %>%
+  #     mutate(outcome_group = if_else(grepl("28_365", outcome_name), "longcovid28", "longcovid90"))
+  # ) %>%
   union_all(
     tibble(
       outcome_name = c("next_post_acute_covid19", "next_covid"), 
@@ -306,6 +317,7 @@ for (comparison_id in comparisonIds) {
       filter(.data$comparison_id == .env$comparison_id) %>%
       mutate(true_coef = 0) %>%
       filter(!is.na(hr)) 
+    if(nrow(dataToFitModel) > 0) {
     calibrationModel <- fitSystematicErrorModel(
       dataToFitModel$coef, 
       dataToFitModel$se_coef, 
@@ -337,6 +349,7 @@ for (comparison_id in comparisonIds) {
     
     dataEstimates <- dataEstimates %>%
       union_all(dataOutcome)
+    }
   }
 }
 

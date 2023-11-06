@@ -756,102 +756,107 @@ outcomeModel <- function(x, covariates = NULL, unadjusted = FALSE, model = c("fi
     
     result <- NULL
     
-    # adjusted
-    if (runFinegray) {
-      fgData <- finegray(Surv(time, fine_gray) ~ ., data=x, weights = weight)
-      fgRegression <- coxph(finegrayFormula, weight=fgwt, data=fgData)
-      result <- result %>%
-        union_all(
-          summary(fgRegression)$coefficients %>%
-            as_tibble(rownames = "variable") %>%
-            select(
-              "variable", "coef", "hr" = "exp(coef)", "se_coef" = "se(coef)", "z",
-              "p" = "Pr(>|z|)"
-            ) %>%
-            left_join(
-              summary(fgRegression)$conf.int %>%
+    tryCatch(
+      {
+        # adjusted
+        if (runFinegray) {
+          fgData <- finegray(Surv(time, fine_gray) ~ ., data=x, weights = weight)
+          fgRegression <- coxph(finegrayFormula, weight=fgwt, data=fgData)
+          result <- result %>%
+            union_all(
+              summary(fgRegression)$coefficients %>%
                 as_tibble(rownames = "variable") %>%
-                select("variable", "lower_hr" = "lower .95", "upper_hr" = "upper .95"),
-              by = "variable"
-            ) %>%
-            mutate(model = "finegray", adjustment = "overlap weighting")
-        )
-    }
-    
-    if (runCox) {
-      coxRegression <- coxph(coxFormula, weight=weight, data=x)
-      result <- result %>%
-        union_all(
-          summary(coxRegression)$coefficients %>%
-            as_tibble(rownames = "variable") %>%
-            select(
-              "variable", "coef", "hr" = "exp(coef)", "se_coef" = "se(coef)", "z",
-              "p" = "Pr(>|z|)"
-            ) %>%
-            left_join(
-              summary(coxRegression)$conf.int %>%
+                select(
+                  "variable", "coef", "hr" = "exp(coef)", "se_coef" = "se(coef)", "z",
+                  "p" = "Pr(>|z|)"
+                ) %>%
+                left_join(
+                  summary(fgRegression)$conf.int %>%
+                    as_tibble(rownames = "variable") %>%
+                    select("variable", "lower_hr" = "lower .95", "upper_hr" = "upper .95"),
+                  by = "variable"
+                ) %>%
+                mutate(model = "finegray", adjustment = "overlap weighting")
+            )
+        }
+        
+        if (runCox) {
+          coxRegression <- coxph(coxFormula, weight=weight, data=x)
+          result <- result %>%
+            union_all(
+              summary(coxRegression)$coefficients %>%
                 as_tibble(rownames = "variable") %>%
-                select("variable", "lower_hr" = "lower .95", "upper_hr" = "upper .95"),
-              by = "variable"
-            ) %>%
-            mutate(model = "cox", adjustment = "overlap weighting")
-        )
-    }
-    
-    # unadjusted
-    if (unadjusted) {
-      
-      x <- mutate(x, weight = 1)
-      
-      if (runFinegray) {
-        fgData <- finegray(Surv(time, fine_gray) ~ ., data=x, weights = weight)
-        fgRegression <- coxph(finegrayFormula, weight=fgwt, data=fgData)
-        result <- result %>%
-          union_all(
-            summary(fgRegression)$coefficients %>%
-              as_tibble(rownames = "variable") %>%
-              select(
-                "variable", "coef", "hr" = "exp(coef)", "se_coef" = "se(coef)", "z",
-                "p" = "Pr(>|z|)"
-              ) %>%
-              left_join(
-                summary(fgRegression)$conf.int %>%
+                select(
+                  "variable", "coef", "hr" = "exp(coef)", "se_coef" = "se(coef)", "z",
+                  "p" = "Pr(>|z|)"
+                ) %>%
+                left_join(
+                  summary(coxRegression)$conf.int %>%
+                    as_tibble(rownames = "variable") %>%
+                    select("variable", "lower_hr" = "lower .95", "upper_hr" = "upper .95"),
+                  by = "variable"
+                ) %>%
+                mutate(model = "cox", adjustment = "overlap weighting")
+            )
+        }
+        
+        # unadjusted
+        if (unadjusted) {
+          
+          x <- mutate(x, weight = 1)
+          
+          if (runFinegray) {
+            fgData <- finegray(Surv(time, fine_gray) ~ ., data=x, weights = weight)
+            fgRegression <- coxph(finegrayFormula, weight=fgwt, data=fgData)
+            result <- result %>%
+              union_all(
+                summary(fgRegression)$coefficients %>%
                   as_tibble(rownames = "variable") %>%
-                  select("variable", "lower_hr" = "lower .95", "upper_hr" = "upper .95"),
-                by = "variable"
-              ) %>%
-              mutate(model = "finegray", adjustment = "crude")
-          )
-      }
-      
-      if (runCox) {
-        coxRegression <- coxph(coxFormula, weight=weight, data=x)
-        result <- result %>%
-          union_all(
-            summary(coxRegression)$coefficients %>%
-              as_tibble(rownames = "variable") %>%
-              select(
-                "variable", "coef", "hr" = "exp(coef)", "se_coef" = "se(coef)", "z",
-                "p" = "Pr(>|z|)"
-              ) %>%
-              left_join(
-                summary(coxRegression)$conf.int %>%
+                  select(
+                    "variable", "coef", "hr" = "exp(coef)", "se_coef" = "se(coef)", "z",
+                    "p" = "Pr(>|z|)"
+                  ) %>%
+                  left_join(
+                    summary(fgRegression)$conf.int %>%
+                      as_tibble(rownames = "variable") %>%
+                      select("variable", "lower_hr" = "lower .95", "upper_hr" = "upper .95"),
+                    by = "variable"
+                  ) %>%
+                  mutate(model = "finegray", adjustment = "crude")
+              )
+          }
+          
+          if (runCox) {
+            coxRegression <- coxph(coxFormula, weight=weight, data=x)
+            result <- result %>%
+              union_all(
+                summary(coxRegression)$coefficients %>%
                   as_tibble(rownames = "variable") %>%
-                  select("variable", "lower_hr" = "lower .95", "upper_hr" = "upper .95"),
-                by = "variable"
-              ) %>%
-              mutate(model = "cox", adjustment = "crude")
-          )
-      }
-      
-    }
-    
+                  select(
+                    "variable", "coef", "hr" = "exp(coef)", "se_coef" = "se(coef)", "z",
+                    "p" = "Pr(>|z|)"
+                  ) %>%
+                  left_join(
+                    summary(coxRegression)$conf.int %>%
+                      as_tibble(rownames = "variable") %>%
+                      select("variable", "lower_hr" = "lower .95", "upper_hr" = "upper .95"),
+                    by = "variable"
+                  ) %>%
+                  mutate(model = "cox", adjustment = "crude")
+              )
+          }
+          
+        }
+        
+      }, error = function(e) {
+        writeLines(as.character(e),
+                   here(outputFolder, paste0("error_mathcing_", as.character(week.k), ".txt")))
+        
+      })
   }
-  
   result <- result %>%
     mutate(number_events_comparator = numberEventsComparator) %>%
     mutate(number_events_exposure = numberEventsExposure)
-  
   return(result)
 }
 
@@ -1114,83 +1119,6 @@ generateCustomCohort <- function(cdm, name, cohort, cohortSet, cohortAttrition =
         schema = attr(cdm, "write_schema"), overwrite = overwrite
       )
   }
-  # add to the cdm
-  cdm[[name]] <- cohort_ref
-  
-  # create the generated cohort set object using the constructor
-  cdm[[name]] <- new_generated_cohort_set(
-    cdm[[name]],
-    cohort_set_ref = cohort_set_ref,
-    cohort_attrition_ref = cohort_attrition_ref,
-    cohort_count_ref = cohort_count_ref)
-  
-  return(cdm)
-}
-generateCustomCohort <- function(cdm, name, cohort, cohortSet, cohortAttrition = NULL, overwrite = FALSE) {
-  
-  # accept a cdm_reference object as input
-  checkmate::assertClass(cdm, "cdm_reference")
-  con <- attr(cdm, "dbcon")
-  
-  # Create the tables in the database however you like
-  # All the tables should be prefixed with `name`
-  # The cohort table should be called `name` in the database
-  
-  # Create the dplyr table references
-  cohort_ref <- cohort %>%
-    CDMConnector::computeQuery(
-      name = name, temporary = FALSE,
-      schema = attr(cdm, "write_schema"), overwrite = overwrite
-    )
-  # Set
-  cohort_set_ref <- cohort %>%
-    distinct(cohort_definition_id) %>%
-    inner_join(cohortSet,
-               by = "cohort_definition_id",
-               copy = TRUE) %>%
-    relocate("cohort_name", .after = "cohort_definition_id") %>%
-    CDMConnector::computeQuery(
-      name = paste0(name, "_set"), temporary = FALSE,
-      schema = attr(cdm, "write_schema"), overwrite = overwrite
-    )
-  # Count
-  cohort_count_ref <- cohort %>%
-    dplyr::group_by(.data$cohort_definition_id) %>%
-    dplyr::summarise(
-      number_records = dplyr::n(),
-      number_subjects = dplyr::n_distinct(.data$subject_id)
-    ) %>%
-    dplyr::right_join(
-      cohort_set_ref %>% dplyr::select("cohort_definition_id"),
-      by = "cohort_definition_id"
-    ) %>%
-    CDMConnector::computeQuery(
-      name = paste0(name, "_count"), temporary = FALSE,
-      schema = attr(cdm, "write_schema"), overwrite = overwrite
-    )
-  # Attrition
-  if (is.null(cohortAttrition)) {
-    cohort_attrition_ref <- cohort_count_ref %>%
-      dplyr::mutate(
-        reason_id = 1, reason = "Qualifying initial events", excluded_records = 0,
-        excluded_subjects = 0
-      ) %>%
-      CDMConnector::computeQuery(
-        name = paste0(name, "_attrition"), temporary = FALSE,
-        schema = attr(cdm, "write_schema"), overwrite = overwrite
-      )
-  } else {
-    cohort_attrition_ref <- cohort %>%
-      distinct(cohort_definition_id) %>%
-      inner_join(cohortAttrition,
-                 by = "cohort_definition_id",
-                 copy = TRUE) %>%
-      CDMConnector::computeQuery(
-        name = paste0(name, "_attrition"), temporary = FALSE,
-        schema = attr(cdm, "write_schema"), overwrite = overwrite
-      )
-  }
-  
   # add to the cdm
   cdm[[name]] <- cohort_ref
   
