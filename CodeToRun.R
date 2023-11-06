@@ -1,3 +1,6 @@
+renv::activate()
+renv::restore()
+
 library(SqlRender)
 library(DBI)
 library(here)
@@ -19,7 +22,7 @@ library(EmpiricalCalibration)
 library(spatstat)
 library(Hmisc)
 
-  databaseName <- "SIDIAP" # "GOLD", "AURUM", "SIDIAP", "UiO", or "CORIVA"
+databaseName <- "SIDIAP" # "GOLD", "AURUM", "SIDIAP", "UiO", or "CORIVA"
 
 # Connection details
 server_dbi <- Sys.getenv("DB_SERVER_DBI_22t2")
