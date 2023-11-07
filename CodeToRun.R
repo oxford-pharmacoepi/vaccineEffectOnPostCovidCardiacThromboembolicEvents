@@ -62,8 +62,8 @@ cohortStem <- "nmb_pacs"
 results <- paste0("Results_", cdmName(cdm))
 
 # Which steps should be run
-instantiateCohorts <- FALSE
-runPropensityScores <- FALSE
+instantiateCohorts <- TRUE
+runPropensityScores <- TRUE
 runOutcomeModel <- TRUE
 
 # Run parallel
