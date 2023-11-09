@@ -47,10 +47,10 @@ ncoCohortName <- paste0(cohortStem, "_negative_control_outcomes")
 indexCohortName <- paste0(cohortStem, "_index")
 
 allCohortNames <- c(
-  covidCohortName, vaccinatedCohortName, symptomsCohortName,
+  covidCohortName, vaccinatedCohortName,
   consequencesCohortName, generalConditionsCohortName,
   databaseSpecificCohortName, 
-  longcovidCohortName, pacsCohortName,
+  pacsCohortName,
   ncoCohortName, indexCohortName
 )
 
