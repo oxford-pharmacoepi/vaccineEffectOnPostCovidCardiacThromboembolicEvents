@@ -100,6 +100,14 @@ if (isTRUE(instantiateCohorts)) {
     cohortTables = allCohortNames,
     cdmName = cdmName(cdm)
   )
+   ## 1.6 Export all cohort details in a single file
+  info(logger, "EXPORT ALL COHORT DETAILS")
+  allCohortDetails <- collectCohortSummary(cdm, allCohortNames) %>%
+    mutate(cohort_table_name = gsub(paste0(cohortStem, "_"), "", cohort_table_name))
+  write_csv(
+    allCohortDetails,
+    file = here(results, paste0("cohort_details_", cdmName(cdm), ".csv"))
+  )
 }
 
 # STEP 3 Propensity scores ----
