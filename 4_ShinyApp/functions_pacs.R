@@ -67,8 +67,8 @@ table_one_study <- function(table_char, study_id) {
     mutate(`Number individuals` = nice(number_subjects_count)) %>%
     mutate(`Age median [Q25-Q75]` = paste0(nice(age_median), " [", nice(age_quantile25), "-", nice(age_quantile75), "]")) %>%
     mutate(`Years of prior history* median [Q25-Q75]` = paste0(nice(prior_history_median), " [", nice(prior_history_quantile25), "-", nice(prior_history_quantile75), "]")) %>%
-    mutate(`Number visits median [Q25-Q75]` = paste0(nice(number_visits_median), " [", nice(number_visits_quantile25), "-", nice(number_visits_quantile75), "]")) %>%
-    mutate(`Number PCRs median [Q25-Q75]` = paste0(nice(number_pcrs_median), "[", nice(number_pcrs_quantile25), "-", nice(number_pcrs_quantile75), "]")) %>%
+    mutate(`Number of GP visits median [Q25-Q75]` = paste0(nice(number_visits_median), " [", nice(number_visits_quantile25), "-", nice(number_visits_quantile75), "]")) %>%
+    mutate(`Number of PCR tests median [Q25-Q75]` = paste0(nice(number_pcrs_median), "[", nice(number_pcrs_quantile25), "-", nice(number_pcrs_quantile75), "]")) %>%
     mutate(`Age group` = as.character(NA)) %>%
     mutate(across(starts_with("age_group"), ~ nice_perc(.x, number_subjects_count))) %>%
     mutate(across(all_of(covariates),  ~ nice_perc(.x, number_subjects_count))) %>%
@@ -79,8 +79,8 @@ table_one_study <- function(table_char, study_id) {
     mutate("Individuals median [Q25 -Q75]" = paste0(gp_median_individuals, " [", gp_quantile25_individuals, "-", gp_quantile75_individuals, "]")) %>%
     select(
       "group", "Number individuals", "Age median [Q25-Q75]", "Age group", starts_with("age_group"), "Sex Female (%)",
-      "Years of prior history* median [Q25-Q75]", "Number visits median [Q25-Q75]",
-      "Number PCRs median [Q25-Q75]", "Region", starts_with("region:"), "GP", "Distinct counts", "Individuals median [Q25 -Q75]",
+      "Years of prior history* median [Q25-Q75]", "Number of GP visits median [Q25-Q75]",
+      "Number of PCR tests median [Q25-Q75]", "Region", starts_with("region:"), "GP", "Distinct counts", "Individuals median [Q25 -Q75]",
       !!covariates
     ) %>%
     rename_with(~ gsub("age_group_", "", gsub("_count", "", gsub(";", " to ", .))), starts_with("age_group")) %>%
@@ -113,6 +113,8 @@ table_one_study <- function(table_char, study_id) {
     mutate(covariate = if_else(covariate == "Gerd", "GERD", covariate)) %>%
     mutate(covariate = if_else(covariate == "Number individuals", "N (individuals)", covariate)) %>%
     mutate(covariate = if_else(covariate == "Sex female (%)", "Sex: Female, N(%)", covariate)) %>%
+    mutate(covariate = if_else(covariate == "Number of gp visits median [q25-q75]", "Number of GP visits median [q25-q75]", covariate)) %>%
+    mutate(covariate = if_else(covariate == "Number of pcr tests median [q25-q75]", "Number of PCR tests median [q25-q75]", covariate)) %>%
     mutate(covariate = gsub(" median", ", median", .data$covariate)) 
   
   comorbidities_out <- c("Chronic liver disease", "Hiv", "Infertility", "Inflammarory bowel disease")

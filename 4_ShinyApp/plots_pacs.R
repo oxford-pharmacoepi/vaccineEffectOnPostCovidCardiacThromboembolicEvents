@@ -12,6 +12,7 @@ library(officer)
 library(knitr)
 library(officedown)
 library(grid)
+library(scales)
 
 source(here("functions_pacs.R"))
 source(here("prep_data_pacs.R"))
@@ -41,14 +42,18 @@ labels_groups <- list("VTE" = y_pos %>% filter(group == "VTE") %>% pull(nice_out
 
 
 y_scale = list(group == "VTE" ~ scale_y_continuous(breaks = c(1:3), 
-                                                   labels = c("Pulmonary embolism","Deep vein thrombosis","Venous thrombosembolism"),
+                                                   labels = c("Pulmonary embolism","Deep vein thrombosis","Venous thromboembolism"),
                                                    limits = c(0.5,3.5)),
                group == "ATE" ~ scale_y_continuous(breaks = c(1:4), 
-                                                   labels = c("Myocardial infarction","Transient ischemic attack","Ischemic stroke","Arterial thrombosembolism"),
+                                                   labels = c("Myocardial infarction","Transient ischemic attack","Ischemic stroke","Arterial thrombosis/thromboembolism"),
                                                    limits = c(0.5,4.5)),
                group == "CD + HS" ~ scale_y_continuous(breaks = c(1:4), 
                                                       labels = c("Ventricular arrhythmia or cardiac arrest","Myocarditis pericarditis","Haemorrhagic stroke","Heart failure"),
                                                       limits = c(0.5,4.5)))
+
+x_scale = list(group == "VTE" ~ scale_x_continuous(breaks = c(0.1, 0.25, 0.5, 1, 2), trans = "log10"),
+               group == "ATE" ~ scale_x_continuous(breaks = c(0.1, 0.25, 0.5, 1, 2), trans = "log10"),
+               group == "CD + HS" ~ scale_x_continuous(breaks = c(0.1, 0.25, 0.5, 1, 2), trans = "log10"))
 
 for (ii in 1:nrow(forest_meta_ve)) {
 gg <- data_meta %>%
@@ -63,20 +68,25 @@ gg <- data_meta %>%
   ggplot(aes(y = adjustment_y, color = outcome_name, group = dash)) +
   geom_point(aes(x = hr), size = 1.5) +
   geom_linerange(aes(xmin = lower_hr, xmax = upper_hr, linetype = dash), linewidth = 0.8) +
-  scale_x_continuous(limits = c(0, 1.5), breaks = seq(0, 2, by = 0.5), oob=scales::rescale_none) + 
   geom_vline(xintercept = 1) +
   ggplot2::theme_test() +
-  facet_grid(group ~ window, scales = "free_y") +
+  facet_grid(group ~ window, scales = "free_y", space = "free") +
   guides(color = guide_legend(title = "Database")) +
-  facetted_pos_scales(y = y_scale) +
+  facetted_pos_scales(y = y_scale, x = x_scale) +
   theme_gray() +
   theme(
     axis.title.y = element_blank(),
-    legend.position = "none"
+    legend.position = "none",
+    panel.spacing = unit(1, "lines")
   ) +
-  scale_color_manual(values = c("#01497c", "#2a6f97", "#2a6f97", 
-                                "#2d6a4f", "#32A251FF", "#32A251FF", "#32A251FF", 
-                                "#e36414", "#e36414", "#e36414", "#e36414"))
+    # scale_x_continuous(breaks = c(0.1, 0.25, 0.5, 1, 2), trans = "log10") +
+    coord_cartesian(xlim = c(0.1, 2)) +
+  # scale_x_continuous(limits = c(0.01, 1), breaks = seq(0, 2, by = 0.5), trans = "log10",
+  #                    oob=scales::rescale_none) +
+  scale_color_manual(values = c("#01497c", "#2a6f97", "#2a6f97",
+                                "#2d6a4f", "#32A251FF", "#32A251FF", "#32A251FF",
+                                "#e36414", "#e36414", "#e36414", "#e36414")) +
+  xlab("Subdistribution Hazard Ratio")
   
   gt = ggplot_gtable(ggplot_build(gg))
   gt$heights[8] <- gt$heights[8]*0.75
@@ -139,7 +149,7 @@ for (ii in 1:nrow(forest_groups_ve)) {
     mutate(dash = ifelse(i2 <= 0.4 | is.na(i2), FALSE, TRUE))
   
   
-  xlim <- c(-10,100)
+  xlim <- c(0.001,100)
   
   outcome_labels <- y_pos %>%
     group_by(outcome_name) %>%
@@ -155,7 +165,9 @@ for (ii in 1:nrow(forest_groups_ve)) {
     geom_linerange(aes(xmin = lower_hr, xmax = upper_hr, linetype = dash)) +
     scale_y_continuous(breaks = y_breaks, labels = outcome_labels$outcome_name, 
                        limits = c(0, max(y_pos$adjustment_y)+1) ) +
-    scale_x_continuous(limits = c(0, 1.5), breaks = seq(0, 2, by = 0.5), oob=scales::rescale_none) + 
+    # scale_x_continuous(limits = c(0, 1.5), breaks = seq(0, 2, by = 0.5), oob=scales::rescale_none, , trans = "log10") +
+    scale_x_continuous(breaks = c(0.1, 0.25, 0.5, 1, 2), labels = c(0.1, 0.25, 0.5, 1, 2), trans = "log10", oob=scales::rescale_none) +
+    coord_cartesian(xlim = c(0.05, 1.5)) +
     geom_vline(xintercept = 1) +
     ggplot2::theme_test() +
     theme(
@@ -164,7 +176,8 @@ for (ii in 1:nrow(forest_groups_ve)) {
     facet_grid(study ~ window) +
     scale_color_manual(values = c("#32A251FF", "#ACD98DFF", "#FF7F0FFF", "#3CB7CCFF", "#B85A0DFF", "#B85A0DFF")) +
     guides(color = guide_legend(title = "Database"),
-           linetype = "none")
+           linetype = "none") +
+    xlab("Subdistribution Hazard Ratio")
   
   if (length(out_group) == 3) {
     gg <- gg +
@@ -222,10 +235,10 @@ for (ii in 1:nrow(forest_meta_cve)) {
   
   
   y_scale = list(group == "VTE" ~ scale_y_continuous(breaks = c(1:3), 
-                                                     labels = c("Pulmonary embolism","Deep vein thrombosis","Venous thrombosembolism"),
+                                                     labels = c("Pulmonary embolism","Deep vein thrombosis","Venous thromboembolism"),
                                                      limits = c(0.5,3.5)),
                  group == "ATE" ~ scale_y_continuous(breaks = c(1:4), 
-                                                     labels = c("Myocardial infarction","Transient ischemic attack","Ischemic stroke","Arterial thrombosembolism"),
+                                                     labels = c("Myocardial infarction","Transient ischemic attack","Ischemic stroke","Arterial thrombosis/thromboembolism"),
                                                      limits = c(0.5,4.5)),
                  group == "CD + HS" ~ scale_y_continuous(breaks = c(1:4), 
                                                          labels = c("Ventricular arrhythmia or cardiac arrest","Myocarditis pericarditis","Haemorrhagic stroke","Heart failure"),
@@ -242,7 +255,7 @@ for (ii in 1:nrow(forest_meta_cve)) {
     ggplot(aes(y = adjustment_y, color = outcome_name, group = dash)) +
     geom_point(aes(x = hr), size = 1.5) +
     geom_linerange(aes(xmin = lower_hr, xmax = upper_hr, linetype = dash), linewidth = 0.8) +
-    scale_x_continuous(limits = c(0, 1.5), breaks = seq(0, 2, by = 0.5), oob=scales::rescale_none) + 
+    # scale_x_continuous(limits = c(0, 1.5), breaks = seq(0, 2, by = 0.5), oob=scales::rescale_none) + 
     geom_vline(xintercept = 1) +
     ggplot2::theme_test() +
     facet_grid(group ~ window, scales = "free_y") +
@@ -253,10 +266,13 @@ for (ii in 1:nrow(forest_meta_cve)) {
       axis.title.y = element_blank(),
       legend.position = "none"
     ) +
+    scale_x_continuous(breaks = c(0.1, 0.25, 0.5, 1, 2), labels = c(0.1, 0.25, 0.5, 1, 2), trans = "log10", oob=scales::rescale_none) +
+    coord_cartesian(xlim = c(0.05, 1.5)) +
     scale_color_manual(values = c("#01497c", "#2a6f97", "#2a6f97", 
                                   "#2d6a4f", "#32A251FF", "#32A251FF", "#32A251FF", 
                                   "#e36414", "#e36414", "#e36414", "#e36414")) +
-    guides(linetype = "none")
+    guides(linetype = "none") +
+    xlab("Subdistribution Hazard Ratio")
   
   gt = ggplot_gtable(ggplot_build(gg))
   gt$heights[8] <- gt$heights[8]*0.75
@@ -336,7 +352,9 @@ for (ii in 1:nrow(forest_groups_cve)) {
     geom_linerange(aes(xmin = lower_hr, xmax = upper_hr, linetype = dash)) +
     scale_y_continuous(breaks = y_breaks, labels = outcome_labels$outcome_name, 
                        limits = c(0, max(y_pos$adjustment_y)+1) ) +
-    scale_x_continuous(limits = c(0, 1.5), breaks = seq(0, 2, by = 0.5), oob=scales::rescale_none) + 
+    # scale_x_continuous(limits = c(0, 1.5), breaks = seq(0, 2, by = 0.5), oob=scales::rescale_none) + 
+    scale_x_continuous(breaks = c(0.1, 0.25, 0.5, 1, 2), labels = c(0.1, 0.25, 0.5, 1, 2), trans = "log10", oob=scales::rescale_none) +
+    coord_cartesian(xlim = c(0.05, 1.5)) +
     geom_vline(xintercept = 1) +
     ggplot2::theme_test() +
     theme(
@@ -345,7 +363,8 @@ for (ii in 1:nrow(forest_groups_cve)) {
     facet_grid(study ~ window) +
     scale_color_manual(values = c("#32A251FF", "#3CB7CCFF","#B85A0DFF")) +
     guides(color = guide_legend(title = "Database"),
-           linetype = "none")
+           linetype = "none") +
+    xlab("Subdistribution Hazard Ratio")
   
   if (length(out_group) == 3) {
     gg <- gg +
@@ -379,5 +398,6 @@ for (ii in 1:nrow(forest_groups_cve)) {
     dpi = 300
   )
 }
+
 
 

@@ -5,8 +5,8 @@ comparisons <- readFiles("comparison")
 study_attrition <- readFiles("study_attrition")
 table_characteristics <- readFiles("table_characteristics_crude")
 table_characteristics_weighted <- readFiles("table_characteristics_weighted")
+numOutcomes <- readFiles("outcome_estimates") %>% filter(model == "finegray")
 estimates <- as_tibble(read.csv(here("estimates_pacs.csv")))
-numOutcomes <- readFiles("outcome_estimates")
 
 comparison_new_name <- comparisons %>%
   select(comparison_name) %>%
@@ -25,6 +25,7 @@ comparisons <- renameComparisonName(comparisons, comparison_new_name)
 comparisons <- comparisons %>%
   filter(cdm_name != "SIDIAP" | grepl("\\(VE\\)", .data$comparison_name)) %>%
   filter(skip == 0)
+
 study_attrition <- study_attrition %>%
   mutate(excluded = if_else(is.na(excluded), 0, excluded)) %>%
   mutate(number_observations = nice(number_observations)) %>%
@@ -44,8 +45,8 @@ table_characteristics <- table_characteristics %>%
              by = c("comparison_id", "cdm_name"))
 
 # Outcome groups
-vte <- c("venous_thrombosembolism", "deep_vein_thrombosis", "pulmonary_embolism")
-ate <- c("arterial_thrombosembolism", "ischemic_stroke", "transient_ischemic_attack", "myocardial_infarction")
+vte <- c("venous_thromboembolism", "deep_vein_thrombosis", "pulmonary_embolism")
+ate <- c("arterial_thromboembolism", "ischemic_stroke", "transient_ischemic_attack", "myocardial_infarction")
 oth <- c("heart_failure", "haemorrhagic_stroke", "myocarditis_pericarditis", "ventricular_arrhythmia_cardiac_arrest")
 
 estimates <- estimates %>% 
@@ -83,18 +84,18 @@ estimates <- estimates %>%
       analysis == "vax_leave" & censoring_method == "leave" ~ "sa_pcs",
       analysis == "covid_leave" & censoring_method == "leave" ~ "sa_covid",
       analysis == "leave" & censoring_method == "leave+vaccine" ~ "sa_vaccine"
-    )) %>%
+    )) %>% 
   filter(!is.na(censoring_method)) %>%
   mutate(
     comparison = gsub("pfizer", "BNT162b2", .data$comparison),
     outcome_name_old = outcome_name,
-    outcome_name = ifelse(grepl(vte[1], .data$outcome_name),
+    outcome_name = ifelse(grepl("venous_thrombosembolism", .data$outcome_name),
                           vte[1],
                           ifelse(grepl(vte[2], .data$outcome_name),
                                  vte[2],
                                  ifelse(grepl(vte[3], .data$outcome_name),
                                         vte[3],
-                                        ifelse(grepl(ate[1], .data$outcome_name),
+                                        ifelse(grepl("arterial_thrombosembolism", .data$outcome_name),
                                                ate[1],
                                                ifelse(grepl(ate[2], .data$outcome_name),
                                                       ate[2],
@@ -120,10 +121,11 @@ estimates <- estimates %>%
          comparison = gsub(" \\(VE\\)", "", .data$comparison)) %>%
   filter(adjustment != "overlap weighting") %>%
   filter(!grepl("moderna", .data$comparison) & !grepl("janssen", .data$comparison)) %>%
-  mutate(cdm_name = factor(cdm_name, levels = c("AURUM", "GOLD", "SIDIAP", "CORIVA", "Meta Analysis")),
+  mutate(cdm_name = factor(cdm_name, levels = c("AURUM", "GOLD", "SIDIAP", "CORIVA", "UiO", "Meta Analysis")),
          window = factor(window, levels = c("0 to 30 days", "31 to 90 days", "91 to 180 days", "181 to 365 days"))) %>%
   mutate(meta = if_else(study == "Meta Analysis", "meta", "no meta")) %>%
   mutate(nice_outcome_name = gsub("arrhythmia cardiac", "arrhythmia or cardiac", .data$nice_outcome_name)) %>%
+  mutate(nice_outcome_name = gsub("Arterial thromboembolism", "Arterial thrombosis/thromboembolism", .data$nice_outcome_name)) %>%
   mutate(number_events_exposure = nice_per10mil(number_events_exposure, number_exposures, 2)) %>%
   mutate(number_events_comparator = nice_per10mil(number_events_comparator, number_comparators, 2)) %>%
   mutate(outcome_name_short = ifelse(grepl(vte[1], .data$outcome_name),
@@ -187,12 +189,12 @@ captions <- comparisons %>%
                                             .data$cdm_name)) %>%
               mutate(caption_w_1 = paste0("Characteristics of weighted populations in ", cdm_name_nice),
                      caption_u_1 = paste0("Characteristics of unweighted populations in ", cdm_name_nice),
-                     caption_2 = " database, stratified by staggered cohort and vaccine brand.") %>%
+                     caption_2 = " database, stratified by staggered cohort and vaccine.") %>%
               distinct() %>%
               mutate(cve = TRUE)
   ) %>%
   filter(!(cdm_name == "CORIVA" & exposure_name == "astrazeneca vaccinated")) %>%
-  mutate(cdm_name = factor(cdm_name, levels = c("AURUM", "GOLD", "SIDIAP", "CORIVA"))) %>%
+  mutate(cdm_name = factor(cdm_name, levels = c("AURUM", "GOLD", "SIDIAP", "CORIVA", "UiO"))) %>%
   arrange(cdm_name)
 
 # OUTCOME TABLE INFO ----
@@ -218,7 +220,7 @@ captions_outcome <- captions %>%
   mutate(
     caption_1 = paste0("Number of records (and risk per 10,000 individuals) for post COVID-19 cardiac and thromboembolic complications,"),
     caption_2 = ifelse(cve,
-                       paste0(" across cohorts and databases, stratified by vaccine brand. ", censoring_name),
+                       paste0(" across cohorts and databases, stratified by vaccine. ", censoring_name),
                        paste0(" across cohorts and databases, stratified by exposure status (", nice_exposure_name, "). ", censoring_name)))
 
 
@@ -226,8 +228,8 @@ group_names <- c("VTE", "ATE", "Others")
 
 forest_meta <- captions_outcome %>%
   mutate(caption_1 = ifelse(cve,
-                            "Forest plots for comparative effectiveness,",
-                            paste0("Forest plots for vaccine effectiveness (", nice_exposure_name, "),")),
+                            "Forest plots for comparative effect,",
+                            paste0("Forest plots for vaccine effect (", nice_exposure_name, "),")),
          caption_2 = paste0(" meta-analysis across cohorts and databases. ", censoring_name)) %>%
   mutate(exposure_name = ifelse(exposure_name == "any vaccine vaccinated",
                                 "Any vaccine",
@@ -252,7 +254,7 @@ forest_groups <- expand_grid(group = group_names,
          nice_group_name = ifelse(group == "VTE",
                                   "venous thromboembolism complications,",
                                   ifelse(group == "ATE",
-                                         "arterial thromboembolism complications,",
+                                         "arterial thrombosis/thromboembolism complications,",
                                          "cardiac diseases and hemorrhagic stroke,")),
          nice_exposure_name = ifelse(comparison == "ChAdOx1" | comparison == "BNT162b2",
                                      paste0(comparison, " vaccine"),
@@ -261,8 +263,8 @@ forest_groups <- expand_grid(group = group_names,
                                             comparison))) %>%
   inner_join(captions_outcome %>% select(censoring_method, censoring_name) %>% distinct(), by = "censoring_method") %>%
   mutate(caption_1 = ifelse(cve,
-                            paste0("Forest plots for comparative effectiveness on preventing ", nice_group_name),
-                            paste0("Forest plots for vaccine effectiveness (", nice_exposure_name, ") on preventing ", nice_group_name)),
+                            paste0("Forest plots for comparative effect on preventing ", nice_group_name),
+                            paste0("Forest plots for vaccine effect (", nice_exposure_name, ") on preventing ", nice_group_name)),
          caption_2 = paste0(" for each cohort and database (meta-analysis estimates across cohorts in the last panel).", censoring_name),
          censoring_filter = censoring_method)
 
